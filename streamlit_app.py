@@ -1,15 +1,21 @@
 """
 Interfaccia web del sistema di riconoscimento delle emozioni dal parlato.
 
-L'applicazione è un semplice client del livello di servizio definito in
-`src/inference.py`: riceve una registrazione dal browser o un file caricato
-dall'utente, la consegna al motore di inferenza e presenta la risposta. Tutta la
-logica — pre-elaborazione, rappresentazione tempo-frequenza, classificazione,
-spiegazione, cronometraggio — vive nel livello di servizio e non qui, così che
-l'interfaccia resti sostituibile senza toccare il sistema.
+L'applicazione è un client del livello di servizio definito in `src/inference.py`:
+riceve una registrazione dal browser o un file caricato dall'utente, la consegna
+al motore di inferenza e presenta la risposta. Tutta la logica — pre-elaborazione,
+rappresentazione tempo-frequenza, classificazione, spiegazione, cronometraggio —
+vive nel livello di servizio e non qui.
+
+Due accorgimenti riguardano il comportamento dell'applicazione sotto carico.
+Il modello è caricato una volta per processo e condiviso fra le sessioni. L'analisi
+è memorizzata in cache sul contenuto della registrazione: Streamlit riesegue lo
+script a ogni interazione, e senza cache ogni click ricalcolerebbe l'intera catena,
+bloccando il processo mentre il componente di registrazione attende risposta.
 
 Avvio locale:   streamlit run streamlit_app.py
 """
+import hashlib
 import io
 
 import numpy as np
@@ -24,29 +30,38 @@ st.set_page_config(page_title="Riconoscimento delle emozioni dal parlato",
 
 
 # ----------------------------------------------------------------------
-# Motore di inferenza
+# Motore di inferenza (una istanza per processo)
 # ----------------------------------------------------------------------
 @st.cache_resource(show_spinner="Inizializzazione del sistema…")
 def carica_motore():
-    """
-    Il modello viene caricato una sola volta per processo e condiviso fra tutte le
-    sessioni. Una chiamata a vuoto paga subito la compilazione a caldo delle
-    librerie di elaborazione del segnale, che altrimenti ricadrebbe sul primo
-    utente sotto forma di alcuni secondi di attesa.
-    """
     engine = InferenceEngine()
     silenzio = np.zeros(int(config.SAMPLE_RATE * config.DURATION), dtype=np.float32)
-    engine.predict(silenzio, config.SAMPLE_RATE, with_gradcam=True)
+    engine.predict(silenzio, config.SAMPLE_RATE, with_gradcam=True)   # riscaldamento
     return engine
 
 
 ENGINE = carica_motore()
 
 
-def leggi_audio(file) -> tuple:
-    """Decodifica il file audio ricevuto dal browser in (segnale, frequenza)."""
-    dati, sr = sf.read(io.BytesIO(file.getvalue()), dtype="float32", always_2d=False)
-    return dati, sr
+@st.cache_data(show_spinner=False, max_entries=8)
+def analizza(audio_bytes: bytes, spiegazione: bool, _chiave: str):
+    """
+    Esegue la catena su una registrazione e restituisce solo dati serializzabili.
+
+    La chiave di cache è l'impronta del contenuto audio: ripetere l'analisi della
+    stessa registrazione non ricalcola nulla.
+    """
+    segnale, sr = sf.read(io.BytesIO(audio_bytes), dtype="float32", always_2d=False)
+    res = ENGINE.predict(segnale, sr, with_gradcam=spiegazione)
+    return {
+        "predicted": res["predicted"],
+        "probabilities": res["probabilities"],
+        "valence": res["valence"],
+        "waveform": res["waveform"],
+        "mel": res["mel"],
+        "cam": res["cam"],
+        "timings": res["timings"],
+    }
 
 
 # ----------------------------------------------------------------------
@@ -62,12 +77,12 @@ st.markdown(
 )
 
 with st.sidebar:
-    st.header("Ingresso")
-    registrazione = st.audio_input("Registra la voce")
-    st.caption("oppure")
-    caricato = st.file_uploader("Carica un file audio", type=["wav", "mp3", "ogg", "flac", "m4a"])
-    spiegazione = st.checkbox("Calcola la spiegazione visiva", value=True)
-
+    st.header("Opzioni")
+    spiegazione = st.checkbox("Calcola la spiegazione visiva (Grad-CAM)", value=True)
+    stile = st.radio("Resa della mappa di salienza", ["classico", "sobrio"],
+                     horizontal=True,
+                     help="«classico» è la resa convenzionale in letteratura; "
+                          "«sobrio» tiene il segnale acromatico.")
     st.divider()
     st.caption(
         f"Rete convoluzionale, {ENGINE.n_params:,}".replace(",", ".") + " parametri. "
@@ -75,27 +90,41 @@ with st.sidebar:
         "in più di una partizione."
     )
 
+# ----------------------------------------------------------------------
+# Ingresso
+# ----------------------------------------------------------------------
+st.subheader("Ingresso")
+col_mic, col_file = st.columns(2)
+with col_mic:
+    registrazione = st.audio_input("Registra la voce")
+with col_file:
+    caricato = st.file_uploader("oppure carica un file audio",
+                                type=["wav", "mp3", "ogg", "flac", "m4a"])
+
 sorgente = registrazione or caricato
 
 if sorgente is None:
-    st.info("Registra la voce o carica un file audio dal pannello a sinistra.")
+    st.info("Registra la voce o carica un file audio per avviare l'analisi.")
     st.stop()
 
-# ----------------------------------------------------------------------
-# Analisi
-# ----------------------------------------------------------------------
+audio_bytes = sorgente.getvalue()
+impronta = hashlib.sha1(audio_bytes).hexdigest()
+
 try:
-    segnale, sr = leggi_audio(sorgente)
+    res = analizza(audio_bytes, spiegazione, impronta)
 except Exception as exc:
-    st.error(f"Non è stato possibile leggere il file audio: {exc}")
+    st.error(f"Non è stato possibile elaborare l'audio: {exc}")
     st.stop()
 
-res = ENGINE.predict(segnale, sr, with_gradcam=spiegazione)
 predetta = config.EMOTIONS_IT[res["predicted"]]
 probabilita = {config.EMOTIONS_IT[e]: p for e, p in res["probabilities"].items()}
 valenza = res["valence"]
 valenza_top = max(valenza, key=valenza.get)
 
+# ----------------------------------------------------------------------
+# Risultati
+# ----------------------------------------------------------------------
+st.divider()
 sin, des = st.columns([1, 1.7], gap="large")
 
 with sin:
@@ -115,8 +144,8 @@ with sin:
 with des:
     st.pyplot(viz.waveform_figure(res["waveform"]))
     st.pyplot(viz.spectrogram_figure(res["mel"]))
-    if spiegazione:
-        st.pyplot(viz.gradcam_figure(res["mel"], res["cam"], predetta))
+    if spiegazione and res["cam"] is not None:
+        st.pyplot(viz.gradcam_figure(res["mel"], res["cam"], predetta, stile=stile))
 
     t = res["timings"]
     righe = [
@@ -127,7 +156,7 @@ with des:
         f"| Inferenza della rete | {t['inference_ms']:.1f} ms |",
     ]
     if spiegazione:
-        righe.append(f"| Spiegazione (CAM) | {t['spiegazione_ms']:.1f} ms |")
+        righe.append(f"| Spiegazione Grad-CAM | {t['spiegazione_ms']:.1f} ms |")
     righe.append(f"| **Totale** | **{t['totale_ms']:.1f} ms** |")
     st.markdown("**Tempi di risposta**")
     st.markdown("\n".join(righe))
@@ -142,13 +171,14 @@ with st.expander("Note sul funzionamento"):
         "del modello circomplesso di Russell, sommando le probabilità di ciascun gruppo. "
         "La somma sfrutta l'intera distribuzione: una predizione incerta ripartita fra "
         "due emozioni negative diverse indica comunque valenza negativa.\n\n"
-        "**Spiegazione.** Le zone in ambra sono le regioni del piano tempo-frequenza che "
-        "hanno pesato di più sulla decisione. Le emozioni ad alta attivazione tendono ad "
+        "**Grad-CAM.** Le zone calde sono le regioni del piano tempo-frequenza che hanno "
+        "pesato di più sulla decisione. Le emozioni ad alta attivazione tendono ad "
         "attivare le bande medio-alte, quelle a bassa attivazione le bande basse.\n\n"
-        "**Tempi.** Nella formulazione generale la spiegazione richiede una propagazione "
+        "**Tempi.** Nella formulazione generale Grad-CAM richiede una propagazione "
         "all'indietro nella rete e costa più della predizione stessa. Poiché questa "
-        "architettura termina con un global average pooling e un unico strato lineare, la "
-        "mappa si ottiene dalla medesima passata in avanti, a costo trascurabile.\n\n"
+        "architettura termina con un global average pooling e un unico strato lineare, "
+        "la mappa — identica a meno dell'errore di arrotondamento — si ottiene dalla "
+        "medesima passata in avanti, a costo trascurabile.\n\n"
         "**Limiti.** Il sistema è addestrato su parlato recitato registrato in studio. "
         "Su voce spontanea, in ambiente rumoroso o in lingue diverse, le prestazioni "
         "sono verosimilmente inferiori. È uno strumento dimostrativo a scopo didattico "

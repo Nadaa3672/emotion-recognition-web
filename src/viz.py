@@ -63,19 +63,36 @@ def spectrogram_figure(mel: np.ndarray):
     return fig
 
 
-def gradcam_figure(mel: np.ndarray, cam: np.ndarray, emotion_it: str):
-    """Spettrogramma in scala di grigi con la mappa di salienza sovrapposta."""
+def gradcam_figure(mel: np.ndarray, cam: np.ndarray, emotion_it: str,
+                   stile: str = "classico"):
+    """
+    Spettrogramma con la mappa di salienza sovrapposta.
+
+    `stile="classico"` è la resa convenzionale in letteratura per Grad-CAM: la
+    mappa è sovrapposta in semitrasparenza con una scala che va dal freddo
+    (irrilevante) al caldo (determinante). `stile="sobrio"` tiene invece il
+    segnale acromatico e riserva il colore alla sola spiegazione.
+    """
+    ext = [0, _TIME_MAX, 0, mel.shape[0]]
     fig, ax = plt.subplots(figsize=_FIGSIZE, dpi=_DPI)
-    ax.imshow(mel, origin="lower", aspect="auto", cmap="Greys_r",
-              extent=[0, _TIME_MAX, 0, mel.shape[0]])
-    ax.imshow(cam, origin="lower", aspect="auto", cmap=_CAM_CMAP,
-              vmin=0, vmax=1, extent=[0, _TIME_MAX, 0, mel.shape[0]])
-    ax.set_title(f"Regioni che determinano la predizione «{emotion_it}»",
+
+    if stile == "classico":
+        ax.imshow(mel, origin="lower", aspect="auto", cmap="magma", extent=ext)
+        ax.imshow(cam, origin="lower", aspect="auto", cmap="jet", alpha=0.5,
+                  vmin=0, vmax=1, extent=ext)
+        ref = matplotlib.cm.ScalarMappable(
+            norm=matplotlib.colors.Normalize(0, 1), cmap="jet")
+    else:
+        ax.imshow(mel, origin="lower", aspect="auto", cmap="Greys_r", extent=ext)
+        ax.imshow(cam, origin="lower", aspect="auto", cmap=_CAM_CMAP,
+                  vmin=0, vmax=1, extent=ext)
+        ref = matplotlib.cm.ScalarMappable(
+            norm=matplotlib.colors.Normalize(0, 1), cmap=_CAM_CMAP_SOLID)
+
+    ax.set_title(f"Grad-CAM — regioni che determinano la predizione «{emotion_it}»",
                  fontsize=10, pad=6)
     _style_axes(ax)
 
-    ref = matplotlib.cm.ScalarMappable(
-        norm=matplotlib.colors.Normalize(0, 1), cmap=_CAM_CMAP_SOLID)
     cb = fig.colorbar(ref, ax=ax, pad=0.015)
     cb.set_label("salienza", fontsize=8)
     cb.ax.tick_params(labelsize=7, length=2)
