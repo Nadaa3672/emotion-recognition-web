@@ -1,0 +1,17 @@
+__pycache__/
+*.py[cod]
+.ipynb_checkpoints/
+.venv/
+venv/
+env/
+
+# dati locali (non versionati: RAVDESS va scaricato da Zenodo)
+data/
+*.wav
+*.npy
+
+.DS_Store
+.idea/
+.vscode/
+gradio_cached_examples/
+flagged/

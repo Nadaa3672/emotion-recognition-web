@@ -1,0 +1,75 @@
+{
+  "parametri_modello": 94728,
+  "dimensione_checkpoint_kb": 380.2,
+  "caricamento_modello_ms": 9.6,
+  "prima_richiesta_a_freddo_ms": 2444.0,
+  "con_gradcam": {
+    "preprocessing_ms": {
+      "mediana_ms": 8.36,
+      "media_ms": 10.16,
+      "p95_ms": 18.07,
+      "min_ms": 6.65,
+      "max_ms": 23.28
+    },
+    "tensor_ms": {
+      "mediana_ms": 0.33,
+      "media_ms": 0.32,
+      "p95_ms": 0.4,
+      "min_ms": 0.26,
+      "max_ms": 0.44
+    },
+    "inference_ms": {
+      "mediana_ms": 16.81,
+      "media_ms": 31.37,
+      "p95_ms": 101.29,
+      "min_ms": 12.06,
+      "max_ms": 112.51
+    },
+    "gradcam_ms": {
+      "mediana_ms": 47.13,
+      "media_ms": 54.26,
+      "p95_ms": 91.97,
+      "min_ms": 20.75,
+      "max_ms": 188.1
+    },
+    "totale_ms": {
+      "mediana_ms": 81.55,
+      "media_ms": 96.11,
+      "p95_ms": 140.42,
+      "min_ms": 64.19,
+      "max_ms": 207.7
+    },
+    "richieste_al_secondo": 12.3
+  },
+  "senza_gradcam": {
+    "preprocessing_ms": {
+      "mediana_ms": 8.49,
+      "media_ms": 9.13,
+      "p95_ms": 14.89,
+      "min_ms": 6.43,
+      "max_ms": 15.83
+    },
+    "tensor_ms": {
+      "mediana_ms": 0.28,
+      "media_ms": 0.3,
+      "p95_ms": 0.35,
+      "min_ms": 0.24,
+      "max_ms": 0.86
+    },
+    "inference_ms": {
+      "mediana_ms": 16.0,
+      "media_ms": 26.16,
+      "p95_ms": 77.26,
+      "min_ms": 11.98,
+      "max_ms": 99.96
+    },
+    "totale_ms": {
+      "mediana_ms": 24.98,
+      "media_ms": 35.58,
+      "p95_ms": 91.33,
+      "min_ms": 18.76,
+      "max_ms": 110.67
+    },
+    "richieste_al_secondo": 40.0
+  }
+}
