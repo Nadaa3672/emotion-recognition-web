@@ -20,20 +20,9 @@ import numpy as np
 
 from src import config
 
-# Rampa sequenziale a tinta unica per la mappa di salienza: dal trasparente
-# all'ambra satura. L'opacità cresce con il valore, così le regioni irrilevanti
-# lasciano vedere lo spettrogramma sottostante invece di coprirlo.
-_CAM_CMAP = LinearSegmentedColormap.from_list(
-    "salienza",
-    [(1.0, 0.85, 0.40, 0.00), (0.98, 0.65, 0.16, 0.55), (0.85, 0.28, 0.06, 0.90)],
-)
 
-# Versione opaca della stessa rampa, usata solo per la barra di riferimento:
-# una legenda semitrasparente su fondo bianco risulterebbe slavata.
-_CAM_CMAP_SOLID = LinearSegmentedColormap.from_list(
-    "salienza_piena",
-    [(1.0, 0.95, 0.80), (0.98, 0.65, 0.16), (0.85, 0.28, 0.06)],
-)
+
+
 
 _TIME_MAX = config.DURATION
 _FIGSIZE = (7.2, 3.1)
@@ -63,36 +52,28 @@ def spectrogram_figure(mel: np.ndarray):
     return fig
 
 
-def gradcam_figure(mel: np.ndarray, cam: np.ndarray, emotion_it: str,
-                   stile: str = "classico"):
+def gradcam_figure(mel: np.ndarray, cam: np.ndarray, emotion_it: str):
     """
-    Spettrogramma con la mappa di salienza sovrapposta.
+    Spettrogramma con la mappa di salienza sovrapposta in semitrasparenza.
 
-    `stile="classico"` è la resa convenzionale in letteratura per Grad-CAM: la
-    mappa è sovrapposta in semitrasparenza con una scala che va dal freddo
-    (irrilevante) al caldo (determinante). `stile="sobrio"` tiene invece il
-    segnale acromatico e riserva il colore alla sola spiegazione.
+    La resa segue la convenzione adottata in letteratura per Grad-CAM: una scala
+    che va dal freddo (regione irrilevante per la decisione) al caldo
+    (determinante), sovrapposta alla rappresentazione tempo-frequenza da cui la
+    decisione è stata tratta.
     """
     ext = [0, _TIME_MAX, 0, mel.shape[0]]
     fig, ax = plt.subplots(figsize=_FIGSIZE, dpi=_DPI)
 
-    if stile == "classico":
-        ax.imshow(mel, origin="lower", aspect="auto", cmap="magma", extent=ext)
-        ax.imshow(cam, origin="lower", aspect="auto", cmap="jet", alpha=0.5,
-                  vmin=0, vmax=1, extent=ext)
-        ref = matplotlib.cm.ScalarMappable(
-            norm=matplotlib.colors.Normalize(0, 1), cmap="jet")
-    else:
-        ax.imshow(mel, origin="lower", aspect="auto", cmap="Greys_r", extent=ext)
-        ax.imshow(cam, origin="lower", aspect="auto", cmap=_CAM_CMAP,
-                  vmin=0, vmax=1, extent=ext)
-        ref = matplotlib.cm.ScalarMappable(
-            norm=matplotlib.colors.Normalize(0, 1), cmap=_CAM_CMAP_SOLID)
+    ax.imshow(mel, origin="lower", aspect="auto", cmap="magma", extent=ext)
+    ax.imshow(cam, origin="lower", aspect="auto", cmap="jet", alpha=0.5,
+              vmin=0, vmax=1, extent=ext)
 
     ax.set_title(f"Grad-CAM — regioni che determinano la predizione «{emotion_it}»",
                  fontsize=10, pad=6)
     _style_axes(ax)
 
+    ref = matplotlib.cm.ScalarMappable(
+        norm=matplotlib.colors.Normalize(0, 1), cmap="jet")
     cb = fig.colorbar(ref, ax=ax, pad=0.015)
     cb.set_label("salienza", fontsize=8)
     cb.ax.tick_params(labelsize=7, length=2)

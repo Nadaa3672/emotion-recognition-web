@@ -79,10 +79,7 @@ st.markdown(
 with st.sidebar:
     st.header("Opzioni")
     spiegazione = st.checkbox("Calcola la spiegazione visiva (Grad-CAM)", value=True)
-    stile = st.radio("Resa della mappa di salienza", ["classico", "sobrio"],
-                     horizontal=True,
-                     help="«classico» è la resa convenzionale in letteratura; "
-                          "«sobrio» tiene il segnale acromatico.")
+   
     st.divider()
     st.caption(
         f"Rete convoluzionale, {ENGINE.n_params:,}".replace(",", ".") + " parametri. "
@@ -145,7 +142,7 @@ with des:
     st.pyplot(viz.waveform_figure(res["waveform"]))
     st.pyplot(viz.spectrogram_figure(res["mel"]))
     if spiegazione and res["cam"] is not None:
-        st.pyplot(viz.gradcam_figure(res["mel"], res["cam"], predetta, stile=stile))
+        st.pyplot(viz.gradcam_figure(res["mel"], res["cam"], predetta))
 
     t = res["timings"]
     righe = [
