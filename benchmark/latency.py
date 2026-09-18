@@ -63,15 +63,33 @@ def main():
         "prima_richiesta_a_freddo_ms": round(freddo_ms, 1),
     }
 
-    for etichetta, gradcam in [("con_gradcam", True), ("senza_gradcam", False)]:
+    configurazioni = [
+        ("spiegazione_con_propagazione_indietro", True, "backward"),
+        ("spiegazione_stessa_passata_avanti", True, "fast"),
+        ("senza_spiegazione", False, "fast"),
+    ]
+
+    # Riscaldamento di ogni percorso di codice prima di misurare.
+    for _, gc, modo in configurazioni:
+        engine.predict(y, sr, with_gradcam=gc, cam_mode=modo)
+
+    for etichetta, gc, modo in configurazioni:
         stadi = {}
-        for i in range(N_RUNS):
-            r = engine.predict(y, sr, with_gradcam=gradcam)
+        for _ in range(N_RUNS):
+            r = engine.predict(y, sr, with_gradcam=gc, cam_mode=modo)
             for k, v in r["timings"].items():
                 stadi.setdefault(k, []).append(v)
         risultati[etichetta] = {k: _riassumi(v) for k, v in stadi.items()}
         mediana_totale = st.median(stadi["totale_ms"])
         risultati[etichetta]["richieste_al_secondo"] = round(1000 / mediana_totale, 1)
+
+    lento = risultati["spiegazione_con_propagazione_indietro"]
+    veloce = risultati["spiegazione_stessa_passata_avanti"]
+    risultati["guadagno_ottimizzazione"] = {
+        "costo_spiegazione_ridotto_di": f"{lento['spiegazione_ms']['mediana_ms'] / max(veloce['spiegazione_ms']['mediana_ms'], 1e-9):.0f}x",
+        "latenza_totale_ridotta_del": f"{(1 - veloce['totale_ms']['mediana_ms'] / lento['totale_ms']['mediana_ms']) * 100:.0f}%",
+        "richieste_al_secondo": f"{lento['richieste_al_secondo']} -> {veloce['richieste_al_secondo']}",
+    }
 
     config.RESULTS_DIR.mkdir(parents=True, exist_ok=True)
     out = config.RESULTS_DIR / "benchmark_latenza.json"

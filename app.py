@@ -58,7 +58,7 @@ def analizza(audio, spiegazione: bool):
         f"| Inferenza della rete | {t['inference_ms']:.1f} ms |",
     ]
     if spiegazione:
-        righe.append(f"| Spiegazione Grad-CAM | {t['gradcam_ms']:.1f} ms |")
+        righe.append(f"| Spiegazione (CAM) | {t['spiegazione_ms']:.1f} ms |")
     righe.append(f"| **Totale** | **{t['totale_ms']:.1f} ms** |")
     tempi = "\n".join(righe)
 
@@ -91,8 +91,10 @@ modello circomplesso di Russell, sommando le probabilità di ciascun gruppo.
 pesato di più sulla decisione. Tipicamente le emozioni ad alta attivazione
 attivano le bande medio-alte, quelle a bassa attivazione le bande basse.
 
-**Tempi.** Il calcolo della spiegazione richiede una propagazione all'indietro
-attraverso la rete e costa più della predizione stessa: per questo è disattivabile.
+**Tempi.** Nella formulazione generale la spiegazione richiede una propagazione
+all'indietro attraverso la rete e costa più della predizione stessa. Poiché questa
+architettura termina con un global average pooling e un solo strato lineare, la
+mappa si ottiene invece dalla medesima passata in avanti, a costo trascurabile.
 """
 
 with gr.Blocks(title="Riconoscimento delle emozioni dal parlato",

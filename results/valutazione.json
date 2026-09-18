@@ -1,0 +1,299 @@
+{
+  "protocollo": "separazione rigorosa dei parlanti (16 addestramento / 4 validazione / 4 test)",
+  "clip_di_test": 240,
+  "otto_classi": {
+    "CNN": {
+      "accuratezza": 0.5708,
+      "macro_f1": 0.5213,
+      "balanced_accuracy": 0.582,
+      "accuratezza_ic95": [
+        0.5083,
+        0.6333
+      ],
+      "macro_f1_ic95": [
+        0.4666,
+        0.5732
+      ]
+    },
+    "SVM_su_MFCC": {
+      "accuratezza": 0.5417,
+      "macro_f1": 0.483,
+      "balanced_accuracy": 0.5078
+    },
+    "riferimento_classe_maggioritaria": {
+      "accuratezza": 0.1333,
+      "macro_f1": 0.0294,
+      "balanced_accuracy": 0.125
+    },
+    "riferimento_casuale_stratificato": {
+      "accuratezza": 0.1167,
+      "macro_f1": 0.1129,
+      "balanced_accuracy": 0.1133
+    },
+    "caso_uniforme": 0.125,
+    "report_per_classe": {
+      "neutral": {
+        "precision": 0.2553191489361702,
+        "recall": 0.75,
+        "f1-score": 0.38095238095238093,
+        "support": 16.0
+      },
+      "calm": {
+        "precision": 0.6136363636363636,
+        "recall": 0.84375,
+        "f1-score": 0.7105263157894737,
+        "support": 32.0
+      },
+      "happy": {
+        "precision": 0.5714285714285714,
+        "recall": 0.125,
+        "f1-score": 0.20512820512820512,
+        "support": 32.0
+      },
+      "sad": {
+        "precision": 0.18181818181818182,
+        "recall": 0.0625,
+        "f1-score": 0.09302325581395349,
+        "support": 32.0
+      },
+      "angry": {
+        "precision": 0.6428571428571429,
+        "recall": 0.84375,
+        "f1-score": 0.7297297297297297,
+        "support": 32.0
+      },
+      "fearful": {
+        "precision": 0.5555555555555556,
+        "recall": 0.3125,
+        "f1-score": 0.4,
+        "support": 32.0
+      },
+      "disgust": {
+        "precision": 0.6,
+        "recall": 0.75,
+        "f1-score": 0.6666666666666666,
+        "support": 32.0
+      },
+      "surprised": {
+        "precision": 1.0,
+        "recall": 0.96875,
+        "f1-score": 0.9841269841269841,
+        "support": 32.0
+      },
+      "accuracy": 0.5708333333333333,
+      "macro avg": {
+        "precision": 0.5525768705289982,
+        "recall": 0.58203125,
+        "f1-score": 0.5212691922759243,
+        "support": 240.0
+      },
+      "weighted avg": {
+        "precision": 0.57239405196852,
+        "recall": 0.5708333333333333,
+        "f1-score": 0.5306236463641604,
+        "support": 240.0
+      }
+    },
+    "matrice_confusione": [
+      [
+        12,
+        4,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        5,
+        27,
+        0,
+        0,
+        0,
+        0,
+        0,
+        0
+      ],
+      [
+        6,
+        3,
+        4,
+        1,
+        7,
+        7,
+        4,
+        0
+      ],
+      [
+        17,
+        7,
+        0,
+        2,
+        0,
+        1,
+        5,
+        0
+      ],
+      [
+        1,
+        0,
+        0,
+        1,
+        27,
+        0,
+        3,
+        0
+      ],
+      [
+        6,
+        3,
+        2,
+        4,
+        4,
+        10,
+        3,
+        0
+      ],
+      [
+        0,
+        0,
+        1,
+        3,
+        4,
+        0,
+        24,
+        0
+      ],
+      [
+        0,
+        0,
+        0,
+        0,
+        0,
+        0,
+        1,
+        31
+      ]
+    ]
+  },
+  "valenza": {
+    "distribuzione_test": {
+      "positiva": 64,
+      "neutra": 48,
+      "negativa": 128
+    },
+    "quota_classe_maggioritaria": 0.5333,
+    "A_decisione_poi_proiezione": {
+      "accuratezza": 0.725,
+      "macro_f1": 0.7128,
+      "balanced_accuracy": 0.7526,
+      "accuratezza_ic95": [
+        0.6708,
+        0.7833
+      ],
+      "macro_f1_ic95": [
+        0.648,
+        0.7718
+      ]
+    },
+    "B_proiezione_poi_decisione": {
+      "accuratezza": 0.725,
+      "macro_f1": 0.6907,
+      "balanced_accuracy": 0.7179,
+      "accuratezza_ic95": [
+        0.6667,
+        0.7833
+      ],
+      "macro_f1_ic95": [
+        0.6232,
+        0.7553
+      ]
+    },
+    "SVM_su_MFCC": {
+      "accuratezza": 0.6625,
+      "macro_f1": 0.6419,
+      "balanced_accuracy": 0.6554
+    },
+    "riferimento_classe_maggioritaria": {
+      "accuratezza": 0.5333,
+      "macro_f1": 0.2319,
+      "balanced_accuracy": 0.3333
+    },
+    "mcnemar_A_vs_B": {
+      "solo_A_corretto": 12,
+      "solo_B_corretto": 12,
+      "entrambi_corretti": 162,
+      "entrambi_errati": 54,
+      "p_value": 1.0,
+      "significativo_al_5pc": false
+    },
+    "report_per_classe_B": {
+      "positiva": {
+        "precision": 1.0,
+        "recall": 0.390625,
+        "f1-score": 0.5617977528089888,
+        "support": 64.0
+      },
+      "neutra": {
+        "precision": 0.5974025974025974,
+        "recall": 0.9583333333333334,
+        "f1-score": 0.736,
+        "support": 48.0
+      },
+      "negativa": {
+        "precision": 0.7463768115942029,
+        "recall": 0.8046875,
+        "f1-score": 0.7744360902255639,
+        "support": 128.0
+      },
+      "accuracy": 0.725,
+      "macro avg": {
+        "precision": 0.7812598029989335,
+        "recall": 0.7178819444444445,
+        "f1-score": 0.6907446143448509,
+        "support": 240.0
+      },
+      "weighted avg": {
+        "precision": 0.7842148189974277,
+        "recall": 0.725,
+        "f1-score": 0.710045315536031,
+        "support": 240.0
+      }
+    },
+    "matrice_confusione_B": [
+      [
+        25,
+        6,
+        33
+      ],
+      [
+        0,
+        46,
+        2
+      ],
+      [
+        0,
+        25,
+        103
+      ]
+    ]
+  },
+  "analisi_errori": {
+    "clip_totali": 240,
+    "errori_a_8_classi": 103,
+    "errori_assorbiti_dal_raggruppamento": 37,
+    "errori_sopravvissuti": 66,
+    "quota_assorbita": 0.3592,
+    "confusioni_assorbite_piu_frequenti": {
+      "calm -> neutral": 5,
+      "sad -> disgust": 5,
+      "fearful -> sad": 4,
+      "fearful -> angry": 4,
+      "neutral -> calm": 4,
+      "disgust -> angry": 4,
+      "fearful -> disgust": 3,
+      "disgust -> sad": 3
+    }
+  }
+}

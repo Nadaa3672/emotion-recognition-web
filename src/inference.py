@@ -28,18 +28,24 @@ class InferenceEngine:
         t0 = time.perf_counter()
         self.device = torch.device(device)
         self.model, self.mean, self.std = model_mod.load_model(model_path, self.device)
-        self.cam = gradcam_mod.GradCAM(self.model, gradcam_mod.last_conv_block(self.model))
+        blocco = gradcam_mod.last_conv_block(self.model)
+        # Entrambe le implementazioni condividono lo stesso hook sulle attivazioni.
+        self.cam_fast = gradcam_mod.FastCAM(self.model, blocco,
+                                            gradcam_mod.final_linear(self.model))
+        self.cam_grad = gradcam_mod.GradCAM(self.model, blocco)
         self.load_time_ms = (time.perf_counter() - t0) * 1000
         self.n_params = model_mod.n_parameters(self.model)
 
     # ------------------------------------------------------------------
-    def predict(self, y_raw: np.ndarray, sr_in: int, with_gradcam: bool = True) -> dict:
+    def predict(self, y_raw: np.ndarray, sr_in: int, with_gradcam: bool = True,
+                cam_mode: str = "fast") -> dict:
         """
         Catena completa su una registrazione.
 
-        Restituisce le probabilità sulle otto emozioni, la sintesi sull'asse
-        della valenza, lo spettrogramma, la mappa Grad-CAM e i tempi dei singoli
-        stadi in millisecondi.
+        `cam_mode` seleziona l'implementazione della spiegazione: "fast" riusa la
+        passata in avanti già eseguita per la predizione, "backward" ricorre alla
+        formulazione generale con propagazione all'indietro. Le due producono la
+        stessa mappa; la seconda serve come riferimento nel confronto dei tempi.
         """
         timings = {}
 
@@ -60,8 +66,11 @@ class InferenceEngine:
         cam = None
         if with_gradcam:
             t0 = time.perf_counter()
-            cam, _ = self.cam(x)
-            timings["gradcam_ms"] = (time.perf_counter() - t0) * 1000
+            if cam_mode == "fast":
+                cam, _ = self.cam_fast(x, logits=logits)
+            else:
+                cam, _ = self.cam_grad(x)
+            timings["spiegazione_ms"] = (time.perf_counter() - t0) * 1000
 
         timings["totale_ms"] = sum(timings.values())
 

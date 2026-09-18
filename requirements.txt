@@ -1,4 +1,9 @@
-gradio>=4.44
+# La build CPU di PyTorch pesa circa un decimo di quella CUDA: senza questa riga
+# l'installazione scarica i pacchetti GPU, inutili qui e troppo grandi per il
+# piano gratuito di Streamlit Community Cloud.
+--extra-index-url https://download.pytorch.org/whl/cpu
+
+streamlit>=1.41
 torch>=2.0
 librosa>=0.10
 soundfile>=0.12
@@ -6,3 +11,6 @@ numpy>=1.24
 matplotlib>=3.7
 scikit-learn>=1.3
 scipy>=1.10
+
+# Interfaccia locale alternativa (non necessaria in produzione)
+# gradio>=4.44

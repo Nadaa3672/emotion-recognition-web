@@ -83,6 +83,39 @@ def gradcam_figure(mel: np.ndarray, cam: np.ndarray, emotion_it: str):
     return fig
 
 
+def probabilities_figure(probabilita: dict, evidenzia: str = None):
+    """
+    Distribuzione di probabilità sulle classi.
+
+    Barre orizzontali ordinate per valore: una sola serie, quindi nessuna legenda
+    e nessun colore che codifichi identità. La classe predetta è distinta per
+    saturazione, non per tinta.
+    """
+    voci = sorted(probabilita.items(), key=lambda kv: kv[1])
+    nomi = [v[0] for v in voci]
+    val = [v[1] for v in voci]
+
+    altezza = max(2.0, 0.38 * len(nomi) + 0.9)
+    fig, ax = plt.subplots(figsize=(_FIGSIZE[0], altezza), dpi=_DPI)
+    colori = ["#3b6fb6" if n == evidenzia else "#c3d3e8" for n in nomi]
+    barre = ax.barh(nomi, val, color=colori, height=0.62)
+
+    for b, v in zip(barre, val):
+        ax.text(v + 0.012, b.get_y() + b.get_height() / 2, f"{v:.0%}",
+                va="center", fontsize=8.5, color="#1f2328")
+
+    ax.set_xlim(0, 1.08)
+    ax.set_xticks([0, 0.25, 0.5, 0.75, 1.0])
+    ax.set_xticklabels(["0%", "25%", "50%", "75%", "100%"])
+    ax.xaxis.grid(True, color="#e3e6ea", linewidth=0.7)
+    ax.set_axisbelow(True)
+    ax.tick_params(length=0, labelsize=9, colors="#5a6169")
+    for s in ax.spines.values():
+        s.set_visible(False)
+    fig.tight_layout()
+    return fig
+
+
 def waveform_figure(wav: np.ndarray):
     """Forma d'onda dopo la normalizzazione a lunghezza fissa."""
     t = np.linspace(0, _TIME_MAX, len(wav))
